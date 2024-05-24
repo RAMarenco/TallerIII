@@ -4,8 +4,10 @@ import jakarta.transaction.Transactional;
 import org.happybaras.taller3.domain.entities.Token;
 import org.happybaras.taller3.domain.entities.User;
 import org.happybaras.taller3.repositories.TokenRepository;
+import org.happybaras.taller3.repositories.UserRepository;
 import org.happybaras.taller3.services.UserService;
 import org.happybaras.taller3.utils.JWTTools;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -13,13 +15,15 @@ import java.util.List;
 @Service
 public class UserServiceImpl implements UserService {
 
+    private final UserRepository userRepository;
     private final JWTTools jwtTools;
 
     private final TokenRepository tokenRepository;
 
-    public UserServiceImpl(JWTTools jwtTools, TokenRepository tokenRepository) {
+    public UserServiceImpl(JWTTools jwtTools, TokenRepository tokenRepository, UserRepository userRepository) {
         this.jwtTools = jwtTools;
         this.tokenRepository = tokenRepository;
+        this.userRepository = userRepository;
     }
 
     @Override
@@ -58,11 +62,20 @@ public class UserServiceImpl implements UserService {
         List<Token> tokens = tokenRepository.findByUserAndActive(user, true);
 
         tokens.forEach(token -> {
-            if(!jwtTools.verifyToken(token.getContent())) {
+            if (!jwtTools.verifyToken(token.getContent())) {
                 token.setActive(false);
                 tokenRepository.save(token);
             }
         });
+    }
 
+    @Override
+    public User findUserAuthenticated() {
+        String identifier = SecurityContextHolder
+                .getContext()
+                .getAuthentication()
+                .getName();
+
+        return userRepository.findOneByUsernameOrEmail(identifier, identifier);
     }
 }
