@@ -1,6 +1,7 @@
 package org.happybaras.taller3.services.impl;
 
 import jakarta.transaction.Transactional;
+import lombok.extern.slf4j.Slf4j;
 import org.happybaras.taller3.domain.dtos.UserRegisterDTO;
 import org.happybaras.taller3.domain.entities.Token;
 import org.happybaras.taller3.domain.entities.User;
@@ -9,6 +10,7 @@ import org.happybaras.taller3.repositories.UserRepository;
 import org.happybaras.taller3.services.UserService;
 import org.happybaras.taller3.utils.JWTTools;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -19,13 +21,15 @@ public class UserServiceImpl implements UserService {
 
     private final UserRepository userRepository;
     private final JWTTools jwtTools;
+    private final PasswordEncoder passwordEncoder;
 
     private final TokenRepository tokenRepository;
 
-    public UserServiceImpl(JWTTools jwtTools, TokenRepository tokenRepository, UserRepository userRepository) {
+    public UserServiceImpl(JWTTools jwtTools, TokenRepository tokenRepository, UserRepository userRepository, PasswordEncoder passwordEncoder) {
         this.jwtTools = jwtTools;
         this.tokenRepository = tokenRepository;
         this.userRepository = userRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -93,7 +97,7 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public boolean checkPassword(User user, String password) {
-        return user.getPassword().equals(password);
+        return passwordEncoder.matches(password, user.getPassword());
     }
 
     @Override
@@ -103,8 +107,8 @@ public class UserServiceImpl implements UserService {
 
         user.setUsername(info.getUsername());
         user.setEmail(info.getEmail());
-        user.setPassword(info.getPassword());
-        user.setActive(true);
+        String encryptedPassword = passwordEncoder.encode(info.getPassword());
+        user.setPassword(encryptedPassword);
 
         userRepository.save(user);
     }

@@ -11,10 +11,7 @@ import org.happybaras.taller3.services.UserService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/auth")
@@ -26,14 +23,14 @@ public class AuthController {
     }
 
     @PostMapping("/login")
-    public ResponseEntity<GeneralResponse> login(@ModelAttribute @Valid UserLoginDTO info) {
+    public ResponseEntity<GeneralResponse> login(@RequestBody @Valid UserLoginDTO info) {
         User user = userService.findOneByIdentifier(info.getIdentifier());
 
         if(user == null)
             return GeneralResponse.builder().status(HttpStatus.NOT_FOUND).getResponse();
 
-        if(!userService.checkPassword(user, user.getPassword()))
-            return GeneralResponse.builder().status(HttpStatus.NOT_FOUND).getResponse();
+        if(!userService.checkPassword(user, info.getPassword()))
+            return GeneralResponse.builder().status(HttpStatus.NOT_FOUND).message("idk").getResponse();
 
         try {
             Token token = userService.registerToken(user);
@@ -46,7 +43,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<GeneralResponse> register(@ModelAttribute @Valid UserRegisterDTO info) {
+    public ResponseEntity<GeneralResponse> register(@RequestBody @Valid UserRegisterDTO info) {
         User user = userService.findByUsernameOrEmail(info);
 
         if(user != null)
@@ -54,6 +51,6 @@ public class AuthController {
 
         userService.createUser(info);
 
-        return GeneralResponse.builder().status(HttpStatus.OK).data(info).message("User registered succesfuly").getResponse();
+        return GeneralResponse.builder().status(HttpStatus.OK).message("User registered succesfuly").getResponse();
     }
 }
