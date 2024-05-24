@@ -11,6 +11,7 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class UserServiceImpl implements UserService {
@@ -76,6 +77,11 @@ public class UserServiceImpl implements UserService {
                 .getAuthentication()
                 .getName();
 
-        return userRepository.findOneByUsernameOrEmail(identifier, identifier);
+        return userRepository.findOneByUsernameOrEmail(identifier, identifier).orElse(null);
+    }
+
+    @Override
+    public User findOneByIdentifier(String identifier) {
+        return userRepository.findOneByUsernameOrEmail(identifier, identifier).orElse(null);
     }
 }
