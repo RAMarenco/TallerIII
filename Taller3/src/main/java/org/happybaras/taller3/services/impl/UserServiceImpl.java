@@ -1,6 +1,7 @@
 package org.happybaras.taller3.services.impl;
 
 import jakarta.transaction.Transactional;
+import org.happybaras.taller3.domain.dtos.UserRegisterDTO;
 import org.happybaras.taller3.domain.entities.Token;
 import org.happybaras.taller3.domain.entities.User;
 import org.happybaras.taller3.repositories.TokenRepository;
@@ -83,5 +84,28 @@ public class UserServiceImpl implements UserService {
     @Override
     public User findOneByIdentifier(String identifier) {
         return userRepository.findOneByUsernameOrEmail(identifier, identifier).orElse(null);
+    }
+
+    @Override
+    public User findByUsernameOrEmail(UserRegisterDTO info) {
+        return userRepository.findOneByUsernameOrEmail(info.getUsername(), info.getEmail()).orElse(null);
+    }
+
+    @Override
+    public boolean checkPassword(User user, String password) {
+        return user.getPassword().equals(password);
+    }
+
+    @Override
+    @Transactional(rollbackOn = Exception.class)
+    public void createUser(UserRegisterDTO info) {
+        User user = new User();
+
+        user.setUsername(info.getUsername());
+        user.setEmail(info.getEmail());
+        user.setPassword(info.getPassword());
+        user.setActive(true);
+
+        userRepository.save(user);
     }
 }

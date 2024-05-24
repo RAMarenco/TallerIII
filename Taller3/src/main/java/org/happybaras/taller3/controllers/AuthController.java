@@ -27,17 +27,32 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<GeneralResponse> login(@ModelAttribute @Valid UserLoginDTO info) {
+        User user = userService.findOneByIdentifier(info.getIdentifier());
 
-        Token token = userService.registerToken(info);
-        return GeneralResponse.builder().status(HttpStatus.OK).data(token).getResponse();
+        if(user == null)
+            return GeneralResponse.builder().status(HttpStatus.NOT_FOUND).getResponse();
+
+        if(!userService.checkPassword(user, user.getPassword()))
+            return GeneralResponse.builder().status(HttpStatus.NOT_FOUND).getResponse();
+
+        try {
+            Token token = userService.registerToken(user);
+            return GeneralResponse.builder().status(HttpStatus.OK).data(token).getResponse();
+        } catch (Exception e) {
+            e.printStackTrace();
+            return GeneralResponse.builder().status(HttpStatus.INTERNAL_SERVER_ERROR).getResponse();
+        }
+
     }
 
     @PostMapping("/register")
     public ResponseEntity<GeneralResponse> register(@ModelAttribute @Valid UserRegisterDTO info) {
-        User user = userService.findByUsernameOrEmail(info.getEmail(), info.getUsername());
+        User user = userService.findByUsernameOrEmail(info);
 
         if(user != null)
             return GeneralResponse.builder().status(HttpStatus.CONFLICT).getResponse();
+
+        userService.createUser(info);
 
         return GeneralResponse.builder().status(HttpStatus.OK).data(info).message("User registered succesfuly").getResponse();
     }
